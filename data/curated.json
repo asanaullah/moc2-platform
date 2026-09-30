@@ -107,13 +107,13 @@
       "reviewed_at": "2026-09-20"
     },
     {
-      "date": "2026-09-15",
-      "title": "Bill the Open Accelerator by allocation",
+      "date": "2026-09-01",
+      "title": "GPUs billed by requested capacity: the status quo, not yet a decision",
       "area": "Billing",
-      "rejected": "Usage-based metering",
+      "rejected": "Nothing yet: D1 (requested capacity, usage-based, or a tier model) is still open",
       "issue": 455,
-      "why": "Market norm; the cost is incurred whether or not the GPU is busy",
-      "reviewed_at": "2026-09-20"
+      "why": "It is what is implemented today (kube_pod_resource_request). The RfD asks MOC leadership to decide D1 and recommends the tier model; no decision has been written back into the issue.",
+      "reviewed_at": "2026-09-29"
     },
     {
       "date": "2026-09-22",
@@ -209,11 +209,11 @@
       "date": "2026-09-23",
       "title": "VM image volumes request Block mode on NFS storage",
       "severity": "warning",
-      "status": "open",
+      "status": "fixed",
       "issue": 534,
       "found_by": "Operations",
-      "detail": "OpenShift Virtualization's OS-image PVCs asked for volumeMode: Block on pure-fb-nfsv4, so they sat Pending, and a Block PVC that does bind cannot be mounted. Setting the storage profile to Filesystem fixed it on dev-workload0; prod-workload0, where it was found, is not yet reported fixed.",
-      "reviewed_at": "2026-09-25"
+      "detail": "OpenShift Virtualization's OS-image PVCs asked for volumeMode: Block on pure-fb-nfsv4, so they sat Pending, and a Block PVC that does bind cannot be mounted. Setting the storage profile to Filesystem fixed it; oac-apps fa11cb1 puts that in the openshift-virtualization chart, which every virtualization cluster including prod-workload0 receives. Issue closed 9/29; confirmed in config, not on the live cluster.",
+      "reviewed_at": "2026-09-29"
     }
   ],
   "timeline": [
@@ -311,7 +311,7 @@
       "section": "In parallel",
       "label": "NIST scoping and gap analysis",
       "start": "2026-08-09",
-      "end": "2026-09-25"
+      "end": "2026-09-29"
     },
     {
       "section": "Operating",
@@ -323,7 +323,7 @@
       "section": "Operating",
       "label": "Lenovo A100 cooling maintenance",
       "start": "2026-09-22",
-      "end": "2026-09-25"
+      "end": "2026-09-28"
     }
   ],
   "timeline_marker": {
@@ -456,6 +456,38 @@
       "issue and its comments. Shown in place of the raw last-comment excerpt.",
       "reviewed_at is the date the thread was actually read."
     ],
+    "18": {
+      "summary": "Closed 9/29: hpdempsey says it was done for the Open Accelerator startups and their projects were created. No requirements list is linked in the thread.",
+      "reviewed_at": "2026-09-29"
+    },
+    "317": {
+      "summary": "The RFC review is done and only sign-off remains; joachimweyl asked msdisme on 9/29 whether it has been signed off, with no answer yet.",
+      "reviewed_at": "2026-09-29"
+    },
+    "536": {
+      "summary": "NIST 800-171 control 3.1.9. Nothing written yet; the next step is to see what BU's existing privacy and security pages can be reused.",
+      "reviewed_at": "2026-09-29"
+    },
+    "499": {
+      "summary": "The checklist is untouched. memalhot has proposed request-form changes: an institutional email, the other users who need access, a project description, and a box for needs beyond the default quota, such as GPUs.",
+      "reviewed_at": "2026-09-29"
+    },
+    "439": {
+      "summary": "The collector is deployed on prod-workload0, but the metrics it needs are not available there. #543 adapts it to the HCP setup, where metrics come from a different endpoint queried per cluster; see #481.",
+      "reviewed_at": "2026-09-29"
+    },
+    "425": {
+      "summary": "Closed. The three H100s have been in prod-workload0 since 9/1, added ahead of requests from two OAC projects that have not firmed up, so there are no expected GPU hours yet.",
+      "reviewed_at": "2026-09-29"
+    },
+    "233": {
+      "summary": "Parked: hpdempsey does not expect to pursue bin-packing for a long time and is leaving it in the backlog, and msdisme was about to move it to the icebox. The July objection stands: no use case is documented, and NIST/HIPAA GPU nodes cannot be shared across organisations.",
+      "reviewed_at": "2026-09-29"
+    },
+    "455": {
+      "summary": "D1 (billing basis), D1b (exceptions) and D2 (idle-reclaim consent) are still with MOC leadership, and the RfD recommends a tier model. New input: vLLM's own request and token counters tell idle from busy without DCGM, per server even on a shared GPU, but only for servers that export them.",
+      "reviewed_at": "2026-09-29"
+    },
     "540": {
       "summary": "The rossoctl controller on oac-prod-workload0 fails its liveness and readiness probes (23 restarts in about 4.5 days). memalhot has ruled out CPU and the probe timeout; memory sits at 107Mi of a 128Mi limit with no OOM kills, and the cause is not yet found.",
       "reviewed_at": "2026-09-28"
@@ -533,8 +565,8 @@
       "reviewed_at": "2026-09-24"
     },
     "505": {
-      "summary": "hpdempsey has produced a draft onboarding/offboarding/support workflow example and sent it to IS&T to check the level of detail before the September all-hands.",
-      "reviewed_at": "2026-09-21"
+      "summary": "Still in progress: the swimlanes were reworked at IS&T's request, and the task is larger than first estimated.",
+      "reviewed_at": "2026-09-29"
     },
     "410": {
       "summary": "knikolla's reading: hosting in AWS us-east-1 is acceptable provided only FedRAMP-authorised services are used — which spawned #508 to enforce that with a service control policy. Not yet confirmed by anyone else, and the second question (can the same IdP serve outside the NIST environment) is left to #413.",
@@ -542,7 +574,7 @@
     },
     "413": {
       "summary": "knikolla's tentative view is that one Keycloak can serve both, isolated by realm (moc and moc-compliance), provided the whole instance is run under the full compliance regime. Explicitly offered as a first reading, not a conclusion.",
-      "reviewed_at": "2026-09-21"
+      "reviewed_at": "2026-09-29"
     },
     "411": {
       "summary": "knikolla's tentative answer is yes: CILogon is not FedRAMP, so trusting it pulls it into the boundary and it may not be usable for logging in to CUI clusters. If that holds it cuts against the CILogon federation in the #282 IdP decision; nobody has responded yet.",
@@ -561,16 +593,16 @@
       "reviewed_at": "2026-09-20"
     },
     "460": {
-      "summary": "Documentation published at docs.oac.massopen.cloud/user-onboarding. Steps 1-3 are complete; steps 4-5 still need writing.",
-      "reviewed_at": "2026-09-20"
+      "summary": "Closed. Steps 4-5 are now published at docs.oac.massopen.cloud/model-deployment (content/model-deployment in oac-user-docs).",
+      "reviewed_at": "2026-09-29"
     },
     "526": {
       "summary": "Upgraded 9/23 via 4.21.33 then 4.22, as the rehearsal for prod-workload0. The NVIDIA driver pods crashed at 4.21.33 on missing kernel headers; larsks resolved the NFD problem and the upgrade went through.",
       "reviewed_at": "2026-09-23"
     },
     "527": {
-      "summary": "Unblocked on cost: the H100 time needs no further approval under $75 (50 hours at $1.50), and joachimweyl now asks for September GPU hours by Oct 1. The build itself, on ESI nodes, has not been reported started.",
-      "reviewed_at": "2026-09-28"
+      "summary": "The build has not started. tzumainn will deploy the cluster, jetty, the same way as the OAC clusters (oac-apps PR #99, not merged yet), and joachimweyl approved taking two H100s on 9/29.",
+      "reviewed_at": "2026-09-29"
     },
     "518": {
       "summary": "msdisme has drafted answers: two weeks' notice for scheduled outages, osTicket acknowledgement within one business day, M–F 9–5 EDT excluding BU holidays. Still open: who sends outage notices, how to reach customers (joachimweyl counts 3, 4 and 2 contacts for Accelidea, Noah Labs and White Room), actual turnaround times from engineering, and the severity/RCA terms joachimweyl added.",
@@ -613,8 +645,8 @@
       "reviewed_at": "2026-09-23"
     },
     "534": {
-      "summary": "Cause found: the VM image PVCs asked for Block mode, which the NFS class can't mount. Setting the pure-fb-nfsv4 storage profile to Filesystem fixed it on dev-workload0; prod-workload0, where it was found, is not reported yet.",
-      "reviewed_at": "2026-09-25"
+      "summary": "Closed. Filesystem mode on the pure-fb-nfsv4 storage profile fixed it, and the fix (oac-apps fa11cb1) is in config for every virtualization cluster, including prod-workload0.",
+      "reviewed_at": "2026-09-29"
     },
     "524": {
       "summary": "Closed 9/23: oac-prod-workload0 is on 4.22, done while it had no user workloads. oac-prod-infra (#523) has not been upgraded yet.",
