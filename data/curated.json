@@ -132,6 +132,15 @@
       "issue": 445,
       "why": "Puts the operator under RHOAI and Git on both workload clusters; the custom prod install was removed on 9/24",
       "reviewed_at": "2026-09-25"
+    },
+    {
+      "date": "2026-10-02",
+      "title": "SRE metrics set for hosted control planes",
+      "area": "Billing",
+      "rejected": "METRICS_SET=All",
+      "issue": 481,
+      "why": "All measured about 35 times the samples of Telemetry on dev-workload0 (595k against 16k per scrape, 94% of it kube-apiserver); SRE already carries the scheduler metrics that billing needs",
+      "reviewed_at": "2026-10-07"
     }
   ],
   "discoveries": [
@@ -152,8 +161,8 @@
       "status": "open",
       "issue": 481,
       "found_by": "Observability rollout",
-      "detail": "kube_pod_resource_request is published only by the kube-scheduler, which under HCP runs on the hub rather than in the cluster. The workload cluster's Prometheus cannot see it, so invoice data is missing. All OAC clusters reached 4.22 on 9/24, and naved001 has two hub-side scraping options running on dev-infra (a custom ServiceMonitor chart, or HyperShift's METRICS_SET=All); neither is chosen and September billing is still unanswered.",
-      "reviewed_at": "2026-09-25"
+      "detail": "kube_pod_resource_request is published only by the kube-scheduler, which under HCP runs on the hub. Since 4.22 the hub scrapes it, but HyperShift's default Telemetry set dropped every scheduler metric. oac-apps e0979f8 (10/2) sets METRICS_SET=SRE on both hubs and the metric now arrives there; forwarding it into the hosted cluster, where the billing code also wants kube_pod_labels, is switched on for dev-workload0 only (3f8532a). Billing generation (#575) has not started, and OAC invoices so far used estimated usage (#462).",
+      "reviewed_at": "2026-10-07"
     },
     {
       "date": "2026-09-14",
@@ -172,8 +181,8 @@
       "status": "open",
       "issue": 351,
       "found_by": "Hardware audit",
-      "detail": "No hardware TLS offload, so the CPU pays for all encryption in transit. Matters for NIST, where encryption is mandatory.",
-      "reviewed_at": "2026-09-20"
+      "detail": "No hardware TLS offload, so the CPU pays for all encryption in transit. Matters for NIST, where encryption is mandatory. The crypto-NIC requirement is now in the requirements document for the hardware purchase under negotiation (9/30); who is making the purchase, and whether they have reviewed it, is unanswered.",
+      "reviewed_at": "2026-10-07"
     },
     {
       "date": "2026-09-11",
@@ -214,6 +223,16 @@
       "found_by": "Operations",
       "detail": "OpenShift Virtualization's OS-image PVCs asked for volumeMode: Block on pure-fb-nfsv4, so they sat Pending, and a Block PVC that does bind cannot be mounted. Setting the storage profile to Filesystem fixed it; oac-apps fa11cb1 puts that in the openshift-virtualization chart, which every virtualization cluster including prod-workload0 receives. Issue closed 9/29; confirmed in config, not on the live cluster.",
       "reviewed_at": "2026-09-29"
+    },
+    {
+      "date": "2026-10-05",
+      "title": "Firewall cut idle API and ingress connections after 30 seconds",
+      "severity": "warning",
+      "status": "fixed",
+      "issue": 470,
+      "found_by": "User report",
+      "detail": "oc logs -f and oc get pods -w on oac-prod-workload0 ended after 30 seconds of silence, because the pfSense HAProxy frontends and backends in front of each hosted cluster kept their 30 s default client and server timeouts. naved001 raised both to one hour on every frontend and backend on 10/5, and schwesig measured all three workload clusters before and after. The setting is now in oac-apps docs/firewall-rules.md with a verify check (e00f769, 9ae79f5); the firewall itself is not in Git, and the issue stays open until the reporter confirms with real workloads.",
+      "reviewed_at": "2026-10-07"
     }
   ],
   "timeline": [
@@ -311,7 +330,7 @@
       "section": "In parallel",
       "label": "NIST scoping and gap analysis",
       "start": "2026-08-09",
-      "end": "2026-09-29"
+      "end": "2026-10-07"
     },
     {
       "section": "Operating",
@@ -456,6 +475,54 @@
       "issue and its comments. Shown in place of the raw last-comment excerpt.",
       "reviewed_at is the date the thread was actually read."
     ],
+    "351": {
+      "summary": "Now part of the requirements document for the hardware under negotiation. joachimweyl asks who is doing the purchase and whether they have reviewed it.",
+      "reviewed_at": "2026-10-07"
+    },
+    "470": {
+      "summary": "Fixed on the firewall 10/5: the HAProxy client and server timeouts went from 30 s to one hour on all three workload clusters, measured before and after, and the step is documented in oac-apps. Open only for the reporter to confirm with real workloads.",
+      "reviewed_at": "2026-10-07"
+    },
+    "381": {
+      "summary": "Closed 10/6 with the setup documented in everpure-moc docs/immutable_storage_setup.md. No log bucket exists yet, and naved001 suggests the NIST MVP may use Amazon S3 instead.",
+      "reviewed_at": "2026-10-07"
+    },
+    "520": {
+      "summary": "Deferred: the AWS monitoring investigation and the ColdFront gap analysis take priority.",
+      "reviewed_at": "2026-10-07"
+    },
+    "496": {
+      "summary": "Closed 10/6 after a meeting with the BU storage team; the SOP work that came out of it is tracked in #577.",
+      "reviewed_at": "2026-10-07"
+    },
+    "415": {
+      "summary": "Blocked on the PA firewalls.",
+      "reviewed_at": "2026-10-07"
+    },
+    "574": {
+      "summary": "Just opened: whether AWS's Landing Zone Accelerator can cover much of 800-171 instead of implementing controls by hand. bu-renm notes AWS lists compliance mapping for 800-171r2.",
+      "reviewed_at": "2026-10-07"
+    },
+    "569": {
+      "summary": "VMs on oac-dev-workload1 register as agents for oac-dev-infra. After talking with larsks, per-cluster VLAN isolation for virtual clusters is assumed not to be needed for now.",
+      "reviewed_at": "2026-10-07"
+    },
+    "568": {
+      "summary": "Closed 10/6 without a new cluster: tzumainn showed VMs on oac-dev-workload1 can boot the discovery image and register as agents on the hub. Networking is the open part, carried in #569.",
+      "reviewed_at": "2026-10-07"
+    },
+    "564": {
+      "summary": "Closed as a duplicate of #514.",
+      "reviewed_at": "2026-10-07"
+    },
+    "555": {
+      "summary": "Closed 10/7: larsks reports every resource on the moc-services cluster is now managed by Argo CD (moc-services-config 80d293c adds the ApplicationSet).",
+      "reviewed_at": "2026-10-07"
+    },
+    "581": {
+      "summary": "tzumainn provisioned MOC-R4PAC08U11-S3 through ESI with RHEL 9.8 on 10/7, with VLAN 439 untagged and 376, 411 and 420 tagged, needed through the end of the year. Open points: one engineer has no SSH key listed, and BMC credentials are not normally given outside the MOC.",
+      "reviewed_at": "2026-10-07"
+    },
     "18": {
       "summary": "Closed 9/29: hpdempsey says it was done for the Open Accelerator startups and their projects were created. No requirements list is linked in the thread.",
       "reviewed_at": "2026-09-29"
@@ -489,12 +556,12 @@
       "reviewed_at": "2026-09-29"
     },
     "540": {
-      "summary": "The rossoctl controller on oac-prod-workload0 fails its liveness and readiness probes (23 restarts in about 4.5 days). memalhot has ruled out CPU and the probe timeout; memory sits at 107Mi of a 128Mi limit with no OOM kills, and the cause is not yet found.",
-      "reviewed_at": "2026-09-28"
+      "summary": "Closed 9/30 after a redeploy stopped the restarts; no cause was found.",
+      "reviewed_at": "2026-10-07"
     },
     "531": {
-      "summary": "A100 request for an intern project (asago) on the dev cluster, about 20 to 40 GPU hours a month. Already on the project spreadsheet via #530; waiting on hpdempsey's approval and an engineer being assigned.",
-      "reviewed_at": "2026-09-28"
+      "summary": "Approved 9/30, to be reviewed in November. The A100 for dev-workload0, MOC-R8PAC23U33, is cabled but has no link; a bad cable is suspected with no spares on hand, so the intern project is still blocked.",
+      "reviewed_at": "2026-10-07"
     },
     "451": {
       "summary": "Approved 9/2 by hpdempsey as not billable to Red Hat, capped at 16 A100 GPU hours on the OAC dev cluster; gavin-test is in oac-dev-workload0 user-projects. Closed 9/28 as done.",
@@ -509,8 +576,8 @@
       "reviewed_at": "2026-09-20"
     },
     "463": {
-      "summary": "hpdempsey is pushing back: the 800-171 spreadsheet is not the outline she asked for, and she wants the gaps grouped by system component (e.g. logging and telemetry retention, user and project onboarding) with high-level findings per area by Wednesday. bu-renm agrees with grouping by system and says the prioritised gaps are being worked through alongside the NIST survey.",
-      "reviewed_at": "2026-09-25"
+      "summary": "A meeting to review the 800-171 spreadsheet is to be scheduled, and joachimweyl points to a slide deck holding much of the material. The physical-access gaps (separate MGHPCC keyring, access audit, training) are split out to #552.",
+      "reviewed_at": "2026-10-07"
     },
     "495": {
       "summary": "Scope clarified after Heidi questioned static configuration: switches get both a static config (uplinks, VLAN definitions, RoCE) and a dynamic one, with interfaces marked managed left untouched. The driver covers the static half.",
@@ -525,16 +592,16 @@
       "reviewed_at": "2026-09-20"
     },
     "452": {
-      "summary": "Waiting on General Counsel: msdisme answered OGC's email on 9/22 with jimmysway copied, and expects a reply or more questions.",
-      "reviewed_at": "2026-09-23"
+      "summary": "Still waiting on other issues, so msdisme proposes naming the Trustees of Boston University as the Provider for now and rewriting once the entity is settled.",
+      "reviewed_at": "2026-10-07"
     },
     "291": {
       "summary": "Waiting on review and sign-off; msdisme sent a follow-up email on 9/17. No technical dispute recorded.",
       "reviewed_at": "2026-09-20"
     },
     "465": {
-      "summary": "computate established that LDAP already appears in RFC 02, the MOC 2.0 Identity Architecture, and the compliance mapping to NIST 800-53 IA-5(9), and has a working lldap proof of concept. Heidi has marked it blocked until the NIST architecture confirms LDAP is in scope.",
-      "reviewed_at": "2026-09-20"
+      "summary": "larsks argues LDAP is worth doing regardless of the NIST side. hpdempsey wants it prioritised against the target-cluster work first, and a statement from IS&T on whether they will accept and maintain an LDAP service.",
+      "reviewed_at": "2026-10-07"
     },
     "398": {
       "summary": "Procedural: msdisme has written to BU staff to confirm who can approve and sign off the personas RFC.",
@@ -557,8 +624,8 @@
       "reviewed_at": "2026-09-21"
     },
     "497": {
-      "summary": "Blocked on access: the report on AWS organization-level monitoring waits for moc-aws PR #34 to grant QuanMPhm permissions, then 2–3 days to finish.",
-      "reviewed_at": "2026-09-21"
+      "summary": "Findings are posted as sub-issues; QuanMPhm will close this once each has consensus on an implementation.",
+      "reviewed_at": "2026-10-07"
     },
     "468": {
       "summary": "EldritchJS has a working manual procedure on the dev cluster: a cirros VM that reaches the internet, resolves DNS and accepts SSH through a port-forward. Folding it into the harness for multiple projects and users is still to do.",
@@ -585,8 +652,8 @@
       "reviewed_at": "2026-09-20"
     },
     "334": {
-      "summary": "larsks documented the VPC-only internal NLB approach for reaching LDAP from Keycloak; a site-to-site VPN via pfSense is identified as the future step, and naved001 and hakasapl have been asked to take it on.",
-      "reviewed_at": "2026-09-20"
+      "summary": "On hold until the new firewall appliances are running (10/6 meeting). larsks has widened the issue from LDAP to a general way of exposing moc-services to internal users without a public endpoint.",
+      "reviewed_at": "2026-10-07"
     },
     "283": {
       "summary": "Closed, but joachimweyl is still chasing whether the review and sign-off actually happened — the closure records creation, not approval.",
@@ -601,8 +668,8 @@
       "reviewed_at": "2026-09-23"
     },
     "527": {
-      "summary": "The build has not started. tzumainn will deploy the cluster, jetty, the same way as the OAC clusters (oac-apps PR #99, not merged yet), and joachimweyl approved taking two H100s on 9/29.",
-      "reviewed_at": "2026-09-29"
+      "summary": "Closed 10/7. tzumainn reported the cluster complete on 10/2; jetty is in oac-apps as a FIPS spoke cluster on oac-dev-infra with 3 control-plane and 2 worker agents.",
+      "reviewed_at": "2026-10-07"
     },
     "518": {
       "summary": "msdisme has drafted answers: two weeks' notice for scheduled outages, osTicket acknowledgement within one business day, M–F 9–5 EDT excluding BU holidays. Still open: who sends outage notices, how to reach customers (joachimweyl counts 3, 4 and 2 contacts for Accelidea, Noah Labs and White Room), actual turnaround times from engineering, and the severity/RCA terms joachimweyl added.",
@@ -625,8 +692,8 @@
       "reviewed_at": "2026-09-23"
     },
     "481": {
-      "summary": "Every OAC cluster is now on 4.22 (prod-infra finished 9/24), and naved001 has two hub-side ways of scraping the metric running on dev-infra. naved001 has handed the choice to larsks; how September gets billed is still unanswered.",
-      "reviewed_at": "2026-09-25"
+      "summary": "METRICS_SET=SRE is merged for both hubs (oac-apps e0979f8) and the scheduler metric now arrives there; forwarding into the hosted cluster is on for dev-workload0 only. The billing code still has to use it (#543, #575).",
+      "reviewed_at": "2026-10-07"
     },
     "467": {
       "summary": "Closed 9/22: the object storage proxy is deployed on the prod infra cluster.",
@@ -661,8 +728,8 @@
       "reviewed_at": "2026-09-25"
     },
     "462": {
-      "summary": "hpdempsey needs every gap-analysis result linked here by 9/25 for next week's all-hands, believing the work is nearly done but undocumented. So far only tzumainn has pointed to his part, oac-apps' architecture-and-deployment docs.",
-      "reviewed_at": "2026-09-25"
+      "summary": "Closed 10/6. A slide deck was accepted as the complete gap analysis and computate linked four supporting documents; hpdempsey notes OAC invoices used estimated usage, with metric-based billing expected in October.",
+      "reviewed_at": "2026-10-07"
     },
     "364": {
       "summary": "OpenShift 4.18.41 is up on the new RHOSO18 hardware after every node needed firmware/BIOS updates and the older iDRACs needed Redfish virtual-media configuration. Next step is the RHOSO/OpenStack deployment itself.",
